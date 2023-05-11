@@ -1,0 +1,53 @@
+version: "3.7"
+
+services:
+  app:
+    image: castopod/app:latest
+    container_name: "castopod-app"
+    volumes:
+      - castopod-media:/opt/castopod/public/media
+    environment:
+      MYSQL_DATABASE: castopod
+      MYSQL_USER: castopod
+      MYSQL_PASSWORD: "!Ac1849"
+      CP_BASEURL: "http://castopod.elisys.click"
+      #CP_ANALYTICS_SALT: changeme
+      CP_CACHE_HANDLER: redis
+      CP_REDIS_HOST: redis
+    networks:
+      - castopod-app
+      - castopod-db
+    restart: unless-stopped
+
+  web-server:
+    image: castopod/web-server:latest
+    container_name: "castopod-web-server"
+    volumes:
+      - castopod-media:/var/www/html/media
+    networks:
+      - castopod-app
+    ports:
+      - 8080:80
+    restart: unless-stopped
+
+  mariadb:
+    image: mariadb:10.5
+    container_name: "castopod-mariadb"
+    networks:
+      - castopod-db
+    volumes:
+      - castopod-db:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "!Ac1849"
+      MYSQL_DATABASE: castopod
+      MYSQL_USER: castopod
+      MYSQL_PASSWORD: "!Ac1849"
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.0-alpine
+    container_name: "castopod-redis"
+    volumes:
+      - castopod-cache:/data
+    networks:
+      - castopod-app
